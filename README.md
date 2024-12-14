@@ -1,5 +1,5 @@
 
-# PiVPN Web (OpenVPN)
+# PiVPN Web (OpenVPN)  *working on wireguard!!
 
 PiVPN Web is a service that allows you to manage users for PiVPN. With this service, you can create, remove, enable, disable users, as well as download or copy the configuration file for your PiVPN setup.
 
