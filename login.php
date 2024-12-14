@@ -32,7 +32,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <script>alert("<?php echo $errorMessage; ?>");</script>
         <?php endif; ?>
         <div class="brand-logo"></div>
-        <div class="brand-title">PiVPN<div class="version"> (OpenVPN v<?php echo shell_exec("openvpn --version | awk '/OpenVPN/ {print $2\")\"}' | head -n 1") ?></div></div>
+        <?php
+        $install_check = shell_exec("openvpn --version");
+        if($install_check){
+        ?>
+        <div class="brand-title">PiVPN<div class="version"> (OpenVPN v<?=shell_exec("openvpn --version | awk '/OpenVPN/ {print $2\")\"}' | head -n 1")?></div></div>
+        <?php }else{ ?>
+        <div class="brand-title">PiVPN<div class="version"> (Wireguard <?=shell_exec("wg --version | awk '/ v/ {print $2\")\"}'")?></div></div>
+        <?php } ?>
         <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="POST">
             <div class="inputs">
                 <input type="text" id="user" name="user" placeholder="Username" required><br>
