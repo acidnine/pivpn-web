@@ -1,5 +1,33 @@
 <?php
 require_once 'app/auth.php';
+function convert_seconds($seconds){
+    // Create DateTime objects representing the start and end timestamps
+    $dt1 = new DateTime("@0");
+    $dt2 = new DateTime("@$seconds");
+    // Calculate the difference between the two timestamps
+    $diff = $dt1->diff($dt2);
+    // Format the difference to display days, hours, minutes, and seconds
+    if($diff->format('%a') != '0'){
+        $ret = $diff->format('%a days, %h hours, %i minutes and %s seconds ago');
+    }elseif($diff->format('%h') != '0'){
+        $ret = $diff->format('%h hours, %i minutes and %s seconds ago');
+    }elseif($diff->format('%i') != '0'){
+        $ret = $diff->format('%i minutes and %s seconds ago');
+    }else{
+        $ret = $diff->format('%s seconds ago');
+    }
+    return $ret;
+}
+function formatBytes($bytes, $precision = 2) { 
+    $units = array('B', 'KiB', 'MiB', 'GiB', 'TiB');/// dividing by 1024 so MiB not MB
+    $bytes = max($bytes, 0);
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+    $pow = min($pow, count($units) - 1);
+    // Uncomment one of the following alternatives
+    $bytes /= pow(1024, $pow);
+    // $bytes /= (1 << (10 * $pow));
+    return round($bytes, $precision) .' '. $units[$pow];
+} 
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,7 +68,32 @@ require_once 'app/auth.php';
     <div class="container">
         <?php
         $output = shell_exec("/bin/sh clients.sh");
-        echo $output;
+        if($install_check){
+            echo $output;
+        }else{
+            // RECEIVE WIREGUARD JSON FROM clients.sh
+            $wg_json = json_decode( $output, TRUE );
+            // EXAMPLE JSON: Object(stdClass)#5 (1) { ["wg0"]=> object(stdClass)#1 (4) { ["privateKey"]=> string(44) "RANDOM=" ["publicKey"]=> string(44) "RANDOM=" ["listenPort"]=> int(51820) ["peers"]=> object(stdClass)#3 (2) { ["RANDOM1="]=> object(stdClass)#2 (2) { ["presharedKey"]=> string(44) "RANDOM=" ["allowedIps"]=> array(1) { [0]=> string(15) "10.241.255.2/32" } } ["RANDOM2="]=> object(stdClass)#4 (6) { ["presharedKey"]=> string(44) "RANDOM=" ["endpoint"]=> string(17) "192.168.0.1:41689" ["latestHandshake"]=> int(1734154901) ["transferRx"]=> int(1314012) ["transferTx"]=> int(12197316) ["allowedIps"]=> array(1) { [0]=> string(15) "10.241.255.3/32" } } } } }
+            echo "<table><tr><th class='border-bottom' colspan='7'>Clients</th><th class='border-bottom'><button id='show-form' style='float:right' class='custom-btn-new btn'> + New </button></th></tr>";
+            echo "<tr><td>";
+            foreach($wg_json as $wg_id => $wg_connector){
+                //var_dump($wg_connector);
+                echo '<br><b>'.$wg_id.'</b><br>';
+                foreach($wg_connector['peers'] as $wg_peer_id => $wg_peer){
+                    echo $wg_peer_id.'<br>';
+                    //var_dump($wg_peer);
+                    if(array_key_exists('endpoint',$wg_peer)){
+                        echo 'Endpoint: '.$wg_peer['endpoint'].'<br>';
+                        echo 'Last Seen: '.date("Y-m-d H:i:s", $wg_peer['latestHandshake']).' - '.convert_seconds(time()-$wg_peer['latestHandshake']).'<br>';
+                        echo 'Received: '.formatBytes($wg_peer['transferRx']).'<br>';
+                        echo 'Sent: '.formatBytes($wg_peer['transferTx']).'<br>';
+                        echo 'Allowed IPs: '.implode(', ',$wg_peer['allowedIps']).'<br>';
+                    }
+                    echo '<br><br>';
+                }
+            }
+            echo "</td></tr></table>";
+        }
         ?>
         <p>
             <a target="_blank" href="https://github.com/g8998/pivpn-web">GITHUB</a>
