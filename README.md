@@ -38,7 +38,7 @@ curl -L https://install.pivpn.io | bash
 2.  Install Apache2 and PHP
 
 ```bash
-sudo apt-get update && sudo apt-get install apache2 php git
+sudo apt-get update && sudo apt-get install apache2 php php-sqlite3 git
 ```
 3.  Edit the file `sudo nano /etc/apache2/apache2.conf` and change the default user and group to your user and group.
 
